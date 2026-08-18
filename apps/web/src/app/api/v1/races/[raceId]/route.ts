@@ -1,3 +1,2 @@
-import { NextResponse } from "next/server";
-import { electionData } from "@/lib/election-data";
-export async function GET(_request:Request,{params}:{params:Promise<{raceId:string}>}) { const {raceId}=await params; const data=await electionData.getRace(raceId); return data?NextResponse.json({ok:true,data}):NextResponse.json({ok:false,error:{code:"NOT_FOUND",message:"Race not found"}},{status:404}); }
+import {RaceDetailSchema} from "@where-they-stand/contracts";import {electionData} from "@/lib/election-data";import {error,pathValue,query,success,UUIDSchema} from "@/lib/api";
+export async function GET(request:Request,{params}:{params:Promise<{raceId:string}>}){if(!query(request,[]))return error("INVALID_QUERY_PARAMETER","Unknown query parameter",400);const {raceId}=await params;if(!pathValue(UUIDSchema,raceId))return error("INVALID_PATH_PARAMETER","Invalid race id",400);const data=await electionData.getRace(raceId);return data?success(RaceDetailSchema,data):error("NOT_FOUND","Race not found",404)}

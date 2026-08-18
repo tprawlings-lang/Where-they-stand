@@ -1,16 +1,21 @@
-import type { CandidateIdentityInput, CandidateRecord } from "./types";
-export interface IdentityCandidate extends CandidateRecord { office: string; state: string; cycle: number; identifiers: Readonly<Record<string,string>>; website?: string; birthDate?: string }
-export type IdentityResolution = { kind:"MATCH"; candidateId:string; reasons:string[] } | { kind:"NEW"; reasons:string[] } | { kind:"AMBIGUOUS"; candidateIds:string[]; reasons:string[] };
-const normalized = (value: string) => value.trim().toLocaleLowerCase("en-US").replace(/[.,]/g, "").replace(/\s+/g, " ");
-export function resolveCandidateIdentity(input: CandidateIdentityInput, candidates: readonly IdentityCandidate[]): IdentityResolution {
-  const scoped = candidates.filter(c => c.office === input.office && c.state === input.state && c.cycle === input.cycle);
-  const matches = scoped.filter(candidate => {
-    const identifierMatch = Object.entries(input.identifiers ?? {}).some(([key,value]) => candidate.identifiers[key] === value);
-    const identityFieldMatch = Boolean(input.birthDate && candidate.birthDate === input.birthDate) || Boolean(input.website && candidate.website && new URL(candidate.website).hostname === new URL(input.website!).hostname);
-    // A name may corroborate an identity field, but is never sufficient on its own.
-    return (identifierMatch || identityFieldMatch) && normalized(candidate.legalName) === normalized(input.legalName);
-  });
-  if (matches.length === 1) return { kind:"MATCH", candidateId: matches[0]!.id, reasons:["office/state/cycle", "corroborating identity"] };
-  if (matches.length > 1) return { kind:"AMBIGUOUS", candidateIds:matches.map(c=>c.id), reasons:["multiple corroborated records"] };
-  return { kind:"NEW", reasons: scoped.some(c => normalized(c.legalName) === normalized(input.legalName)) ? ["name alone is insufficient"] : ["no corroborated identity"] };
+import type { CandidateIdentityInput, CandidateRecord, ExternalIdentifierInput } from "./types";
+export interface IdentityCandidate extends CandidateRecord { office:string; state:string; cycle:number; specialElection:boolean; identifiers:readonly ExternalIdentifierInput[]; website?:string; birthDate?:string }
+export type IdentityResolution =
+ | {kind:"MATCH";candidateId:string;reasons:string[]}
+ | {kind:"NEW";reasons:string[]}
+ | {kind:"AMBIGUOUS";candidateIds:string[];reasons:string[]}
+ | {kind:"CONFLICT";candidateIds:string[];identifiers:ExternalIdentifierInput[];reasons:string[]};
+const normalize=(value:string)=>value.trim().toLocaleLowerCase("en-US").normalize("NFKD").replace(/\p{Diacritic}/gu,"").replace(/[.,]/g,"").replace(/\s+/g," ");
+const stableTypes=new Set(["CANDIDATE_ID","BIOGUIDE_ID","STATE_PERSON_ID"]);
+const sameIdentifier=(a:ExternalIdentifierInput,b:ExternalIdentifierInput)=>a.authority===b.authority&&a.identifierType===b.identifierType&&a.externalId===b.externalId&&(stableTypes.has(a.identifierType)||(a.electionCycle??null)===(b.electionCycle??null));
+export function resolveCandidateIdentity(input:CandidateIdentityInput,candidates:readonly IdentityCandidate[]):IdentityResolution {
+ const owners=new Map<string,ExternalIdentifierInput[]>();
+ for(const candidate of candidates) for(const identifier of input.identifiers) if(candidate.identifiers.some(existing=>sameIdentifier(existing,identifier))) owners.set(candidate.id,[...(owners.get(candidate.id)??[]),identifier]);
+ const outOfScope=[...owners.keys()].filter(id=>{const c=candidates.find(value=>value.id===id)!;return c.office!==input.office||c.state!==input.state;});
+ if(outOfScope.length) return {kind:"CONFLICT",candidateIds:outOfScope,identifiers:input.identifiers.filter(i=>candidates.some(c=>outOfScope.includes(c.id)&&c.identifiers.some(e=>sameIdentifier(e,i)))),reasons:["identifier already belongs to an out-of-scope candidate"]};
+ const scoped=candidates.filter(c=>c.office===input.office&&c.state===input.state);
+ const corroborated=scoped.filter(c=>owners.has(c.id)||Boolean(input.birthDate&&c.birthDate===input.birthDate)||Boolean(input.website&&c.website&&new URL(c.website).hostname===new URL(input.website).hostname));
+ if(corroborated.length>1) return {kind:"AMBIGUOUS",candidateIds:corroborated.map(c=>c.id),reasons:["multiple corroborated identities require review"]};
+ if(corroborated.length===1) return {kind:"MATCH",candidateId:corroborated[0]!.id,reasons:["office/state and incoming cycle context","corroborating identity"]};
+ return {kind:"NEW",reasons:scoped.some(c=>normalize(c.legalName)===normalize(input.legalName))?["name alone is insufficient"]:["no corroborated identity"]};
 }

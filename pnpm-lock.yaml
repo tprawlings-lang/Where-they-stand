@@ -8,6 +8,9 @@ importers:
 
   .:
     devDependencies:
+      tsx:
+        specifier: ^4.20.5
+        version: 4.23.12
       turbo:
         specifier: ^2.5.6
         version: 2.10.11
@@ -38,6 +41,9 @@ importers:
       react-dom:
         specifier: 19.1.1
         version: 19.1.1(react@19.1.1)
+      zod:
+        specifier: ^4.1.5
+        version: 4.4.3
     devDependencies:
       '@eslint/eslintrc':
         specifier: ^3.3.1
@@ -133,6 +139,12 @@ importers:
       '@types/react':
         specifier: ^19.1.12
         version: 19.2.18
+      '@types/react-dom':
+        specifier: ^19.1.9
+        version: 19.2.4(@types/react@19.2.18)
+      react-dom:
+        specifier: ^19.1.1
+        version: 19.1.1(react@19.1.1)
       typescript:
         specifier: ^5.9.2
         version: 5.9.3

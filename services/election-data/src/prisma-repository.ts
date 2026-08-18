@@ -1,19 +1,34 @@
+import {orderRaceCandidates} from "./order";
 import type { PrismaClient } from "@where-they-stand/db";
-import type { ElectionDataRepository } from "./repository";
-import type { BallotStatus, CandidateImport } from "./types";
-
+import type { ElectionDataRepository,IdentifierAttachment } from "./repository";
+import {externalIdentifierKey,type BallotStatus,type CandidateImport,type ExternalIdentifierInput} from "./types";
 export class PrismaElectionDataRepository implements ElectionDataRepository {
-  constructor(private readonly db: PrismaClient) {}
-  getElection(id:string){ return this.db.election.findUnique({where:{id}}); }
-  listRaces(electionId:string){ return this.db.race.findMany({where:{electionId},orderBy:[{state:"asc"},{office:"asc"},{district:"asc"}]}) as never; }
-  getRace(id:string){ return this.db.race.findUnique({where:{id},include:{candidates:{include:{candidate:true},orderBy:[{ballotOrder:"asc"},{candidate:{displayName:"asc"}}]}}}) as never; }
-  getCandidate(id:string){ return this.db.candidate.findUnique({where:{id},include:{races:true,accounts:true}}) as never; }
-  async identityCandidates(input:CandidateImport) {
-    const rows=await this.db.candidate.findMany({where:{races:{some:{race:{office:input.office,state:input.state,election:{cycle:input.cycle}}}}},include:{externalIds:true,races:{include:{race:{include:{election:true}}}}}});
-    return rows.map((c: { externalIds: Array<{authority:string;externalId:string}> } & Record<string,unknown>)=>({...c,office:input.office,state:input.state,cycle:input.cycle,identifiers:Object.fromEntries(c.externalIds.map((x:{authority:string;externalId:string})=>[x.authority,x.externalId]))})) as never;
-  }
-  createCandidate(input:CandidateImport){ return this.db.candidate.create({data:{legalName:input.legalName,displayName:input.displayName,partyText:input.partyText,fecCandidateId:input.identifiers?.FEC,incumbentFlag:input.incumbentFlag??false}}); }
-  async attachExternalIds(candidateId:string,ids:Readonly<Record<string,string>>) { for(const [authority,externalId] of Object.entries(ids)) await this.db.candidateExternalId.upsert({where:{authority_externalId:{authority,externalId}},create:{candidateId,authority,externalId},update:{}}); }
-  upsertRaceCandidate(input:CandidateImport,candidateId:string){ return this.db.raceCandidate.upsert({where:{sourceAuthority_sourceRecordId:{sourceAuthority:input.sourceAuthority,sourceRecordId:input.sourceRecordId}},create:{raceId:input.raceId,candidateId,ballotStatus:input.ballotStatus,ballotOrder:input.ballotOrder,fecFilingStatus:input.fecFilingStatus,sourceAuthority:input.sourceAuthority,sourceRecordId:input.sourceRecordId},update:{fecFilingStatus:input.fecFilingStatus}}) as never; }
-  setBallotStatus(raceId:string,candidateId:string,status:BallotStatus,at:Date){ return this.db.raceCandidate.update({where:{raceId_candidateId:{raceId,candidateId}},data:{ballotStatus:status,withdrawnAt:status==="WITHDRAWN"?at:undefined,disqualifiedAt:status==="DISQUALIFIED"?at:undefined}}) as never; }
+ constructor(private readonly db:PrismaClient){}
+ getElection(id:string){return this.db.election.findUnique({where:{id}}) as never}
+ listRaces(electionId:string,options={limit:50,offset:0}){return this.db.race.findMany({where:{electionId},take:options.limit,skip:options.offset,orderBy:[{state:"asc"},{office:"asc"},{district:"asc"}]}) as never}
+ async getRace(id:string){const result=await this.db.race.findUnique({where:{id},include:{candidates:{include:{candidate:true},orderBy:[{ballotOrder:"asc"},{candidate:{displayName:"asc"}}]}}});if(!result)return null;return {...result,candidates:orderRaceCandidates(result.candidates.map(({updatedAt:_,...entry})=>entry) as never)} as never}
+ async getCandidate(id:string){const result=await this.db.candidate.findUnique({where:{id},include:{races:true,accounts:true}});if(!result)return null;return {...result,races:result.races.map(({updatedAt:_,...entry})=>entry)} as never}
+ async identityCandidates(input:CandidateImport){
+  const identifiers=input.identifiers.map(i=>({authority:i.authority,identifierType:i.identifierType,externalId:i.externalId,electionCycle:i.electionCycle}));
+  const rows=await this.db.candidate.findMany({where:{OR:[{races:{some:{race:{office:input.office,state:input.state,election:{cycle:input.cycle},specialFlag:input.specialElection}}}},{externalIds:{some:{OR:identifiers}}}]},include:{externalIds:true,races:{include:{race:{include:{election:true}}}}}});
+  return rows.map((candidate:any)=>({...candidate,office:input.office,state:input.state,cycle:input.cycle,specialElection:input.specialElection,identifiers:candidate.externalIds})) as never;
+ }
+ createCandidate(input:CandidateImport){return this.db.candidate.create({data:{legalName:input.legalName,displayName:input.displayName}})}
+ async deleteUnassociatedCandidate(candidateId:string){await this.db.candidate.deleteMany({where:{id:candidateId,races:{none:{}},externalIds:{none:{}}}})}
+ async attachExternalIds(candidateId:string,ids:readonly ExternalIdentifierInput[]):Promise<IdentifierAttachment>{
+  return this.db.$transaction(async tx=>{
+   const conflicts=[] as ExternalIdentifierInput[]; const owners=new Set<string>();
+   for(const id of ids){const existing=await tx.candidateExternalId.findUnique({where:{identityKey:externalIdentifierKey(id)}});if(existing&&existing.candidateId!==candidateId){conflicts.push(id);owners.add(existing.candidateId)}}
+   if(conflicts.length)return {kind:"CONFLICT",candidateIds:[...owners],identifiers:conflicts};
+   for(const id of ids){const identityKey=externalIdentifierKey(id);await tx.candidateExternalId.upsert({where:{identityKey},create:{id:crypto.randomUUID(),candidateId,identityKey,...id,firstObservedAt:id.observedAt,lastObservedAt:id.observedAt},update:{lastObservedAt:id.observedAt,verificationStatus:id.verificationStatus,confidence:id.confidence}})};
+   return {kind:"ATTACHED"};
+  },{isolationLevel:"Serializable"});
+ }
+ upsertRaceCandidate(input:CandidateImport,candidateId:string){return this.db.$transaction(async tx=>{
+  const key={raceId:input.raceId,sourceAuthority:input.sourceAuthority,sourceRecordId:input.sourceRecordId}; const existing=await tx.raceCandidate.findUnique({where:{raceId_sourceAuthority_sourceRecordId:key}});
+  if(existing&&existing.candidateId!==candidateId)throw new Error("BALLOT_SOURCE_IDENTITY_CONFLICT");
+  const statusTimes={withdrawnAt:input.ballotStatus==="WITHDRAWN"?input.effectiveAt:null,disqualifiedAt:input.ballotStatus==="DISQUALIFIED"?input.effectiveAt:null,replacedAt:input.ballotStatus==="REPLACED"?input.effectiveAt:null};
+  return tx.raceCandidate.upsert({where:{raceId_sourceAuthority_sourceRecordId:key},create:{raceId:input.raceId,candidateId,ballotStatus:input.ballotStatus,ballotOrder:input.ballotOrder,partyText:input.partyText,incumbentFlag:input.incumbentFlag??false,fecCandidateId:input.fecCandidateId,filingStatus:input.filingStatus,sourceAuthority:input.sourceAuthority,sourceRecordId:input.sourceRecordId,importKey:input.importKey,observedAt:input.observedAt,effectiveAt:input.effectiveAt,writeIn:input.ballotStatus==="WRITE_IN",replacementCandidateId:input.replacementCandidateId,...statusTimes},update:{ballotOrder:input.ballotOrder,partyText:input.partyText,incumbentFlag:input.incumbentFlag??false,filingStatus:input.filingStatus,observedAt:input.observedAt}})
+ },{isolationLevel:"Serializable"}) as never}
+ setBallotStatus(raceId:string,candidateId:string,status:BallotStatus,at:Date){return this.db.raceCandidate.update({where:{raceId_candidateId:{raceId,candidateId}},data:{ballotStatus:status,withdrawnAt:status==="WITHDRAWN"?at:null,disqualifiedAt:status==="DISQUALIFIED"?at:null,replacedAt:status==="REPLACED"?at:null,writeIn:status==="WRITE_IN"}}) as never}
 }

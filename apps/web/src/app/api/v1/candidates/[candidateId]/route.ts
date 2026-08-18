@@ -1,3 +1,2 @@
-import { NextResponse } from "next/server";
-import { electionData } from "@/lib/election-data";
-export async function GET(_request:Request,{params}:{params:Promise<{candidateId:string}>}) { const {candidateId}=await params; const data=await electionData.getCandidate(candidateId); return data?NextResponse.json({ok:true,data}):NextResponse.json({ok:false,error:{code:"NOT_FOUND",message:"Candidate not found"}},{status:404}); }
+import {CandidateDetailSchema} from "@where-they-stand/contracts";import {electionData} from "@/lib/election-data";import {error,pathValue,query,success,UUIDSchema} from "@/lib/api";
+export async function GET(request:Request,{params}:{params:Promise<{candidateId:string}>}){if(!query(request,[]))return error("INVALID_QUERY_PARAMETER","Unknown query parameter",400);const {candidateId}=await params;if(!pathValue(UUIDSchema,candidateId))return error("INVALID_PATH_PARAMETER","Invalid candidate id",400);const data=await electionData.getCandidate(candidateId);return data?success(CandidateDetailSchema,data):error("NOT_FOUND","Candidate not found",404)}

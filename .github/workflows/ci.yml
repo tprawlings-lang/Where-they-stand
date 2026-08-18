@@ -6,6 +6,19 @@ on:
 jobs:
   javascript:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: where_they_stand_test
+          POSTGRES_USER: wts
+          POSTGRES_PASSWORD: test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U wts -d where_they_stand_test"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql://wts:test@localhost:5432/where_they_stand_test
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -13,6 +26,8 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: 22, cache: pnpm }
       - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @where-they-stand/db exec prisma migrate deploy
+      - run: pnpm --filter @where-they-stand/db db:validate
       - run: pnpm lint
       - run: pnpm typecheck
       - run: pnpm test

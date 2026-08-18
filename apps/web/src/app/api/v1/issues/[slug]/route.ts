@@ -1,6 +1,2 @@
-import { NextResponse } from "next/server";
-import { db } from "@where-they-stand/db";
-export async function GET(_request:Request,{params}:{params:Promise<{slug:string}>}) {
- const {slug}=await params; const data=await db.issue.findUnique({where:{slug},include:{versions:{orderBy:{version:"desc"}}}});
- return data?NextResponse.json({ok:true,data}):NextResponse.json({ok:false,error:{code:"NOT_FOUND",message:"Issue not found"}},{status:404});
-}
+import {IssueSchema} from "@where-they-stand/contracts"; import {db} from "@where-they-stand/db"; import {error,pathValue,query,SlugSchema,success} from "@/lib/api";
+export async function GET(request:Request,{params}:{params:Promise<{slug:string}>}){if(!query(request,[]))return error("INVALID_QUERY_PARAMETER","Unknown query parameter",400);const {slug}=await params;if(!pathValue(SlugSchema,slug))return error("INVALID_PATH_PARAMETER","Invalid issue slug",400);const data=await db.issue.findUnique({where:{slug},select:{id:true,slug:true,neutralTitle:true,publicCategory:true,versions:{orderBy:{version:"desc"},select:{id:true,version:true,cycle:true,canonicalQuestion:true,goal:true,planJson:true,effectiveAt:true,status:true}}}});return data?success(IssueSchema,data):error("NOT_FOUND","Issue not found",404)}

@@ -1,21 +1,25 @@
 # Phase 1A election data spine
 
-Election records are imported through `@where-they-stand/election-data`. The Phase 1A FEC adapter accepts checked-in fixtures only; it deliberately does not perform network requests. State ballot authorities can later implement `StateElectionSource` without changing import services.
+Election records are imported through `@where-they-stand/election-data`. The FEC adapter reads checked-in fixtures only. Future ballot-authority integrations implement `StateElectionSource`; Phase 1A contains no state scrapers.
 
-Candidate identity is scoped by office, state, and cycle, then requires a matching external identifier or corroborating identity field. A name match alone creates a distinct record. FEC filing status and official ballot status are separate fields. Withdrawn and disqualified associations remain stored with timestamps.
+## Identity and candidacy safety
+
+`Candidate` stores stable person names only. Party, incumbency, filing identifiers/status, ballot status, and ballot provenance belong to a race candidacy. Identity matching requires office, state, cycle, election type, and corroborating data. A name or party never establishes identity. Identifier ownership conflicts return an explicit review result and are not attached.
+
+Election, race, and ballot imports use deterministic, source-scoped keys. FEC filing never establishes ballot qualification. Withdrawals, disqualifications, replacements, and write-ins remain stored with provenance and effective/observation timestamps.
 
 ## Issue seed
 
-Run `pnpm --filter @where-they-stand/db db:seed`. The seed is idempotent. If the content hash or canonical question for an existing version differs, it stops rather than overwriting published wording; add a new versioned definition instead.
+Run `pnpm --filter @where-they-stand/db db:seed`. The loader discovers every versioned JSON file, validates its filename and contents, and compares it with the approved hash manifest. The transactional seed is idempotent and refuses to overwrite a changed version.
 
 ## Read-only API
 
-All responses use `{ "ok": true, "data": ... }` or `{ "ok": false, "error": { "code", "message" } }`.
+Responses use strict `{ "ok": true, "data": ... }` or `{ "ok": false, "error": { "code", "message" } }` contracts. UUIDs, slugs, pagination, and allowed query fields are validated. List limits are at most 100.
 
-- `GET /api/v1/issues`
+- `GET /api/v1/issues?limit=50&offset=0`
 - `GET /api/v1/issues/{slug}`
-- `GET /api/v1/elections/{electionId}/races`
+- `GET /api/v1/elections/{electionId}/races?limit=50&offset=0`
 - `GET /api/v1/races/{raceId}`
 - `GET /api/v1/candidates/{candidateId}`
 
-Party is returned only as factual candidate metadata. It is not supplied to any stance or identity decision.
+Party is factual candidacy metadata only. Identity, ordering, evidence, and publication decisions do not accept party as a deciding input.

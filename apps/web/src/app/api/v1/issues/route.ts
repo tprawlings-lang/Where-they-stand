@@ -1,6 +1,2 @@
-import { NextResponse } from "next/server";
-import { db } from "@where-they-stand/db";
-export async function GET() {
- const data=await db.issue.findMany({include:{versions:{where:{status:"active"},orderBy:{version:"desc"}}},orderBy:{neutralTitle:"asc"}});
- return NextResponse.json({ok:true,data});
-}
+import {IssueSchema} from "@where-they-stand/contracts"; import {db} from "@where-they-stand/db"; import {z} from "zod"; import {error,pagination,query,success} from "@/lib/api";
+export async function GET(request:Request){const params=query(request,["limit","offset"]);if(!params)return error("INVALID_QUERY_PARAMETER","Unknown query parameter",400);const page=pagination(params);if(!page.success)return error("INVALID_QUERY_PARAMETER","Invalid pagination",400);const data=await db.issue.findMany({select:{id:true,slug:true,neutralTitle:true,publicCategory:true,versions:{where:{status:"active"},orderBy:{version:"desc"},select:{id:true,version:true,cycle:true,canonicalQuestion:true,goal:true,planJson:true,effectiveAt:true,status:true}}},orderBy:{neutralTitle:"asc"},take:page.data.limit,skip:page.data.offset});return success(z.array(IssueSchema),data)}
