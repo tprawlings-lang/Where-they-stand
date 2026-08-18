@@ -9,11 +9,15 @@
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
+    "@where-they-stand/contracts": "workspace:*",
+    "@where-they-stand/db": "workspace:*",
+    "@where-they-stand/election-data": "workspace:*",
     "@where-they-stand/issue-definitions": "workspace:*",
     "@where-they-stand/ui": "workspace:*",
     "next": "15.5.2",
     "react": "19.1.1",
-    "react-dom": "19.1.1"
+    "react-dom": "19.1.1",
+    "zod": "^4.1.5"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",

@@ -23,13 +23,35 @@ enum PublicationStatus {
   LEGAL_HOLD
 }
 
+enum BallotStatus {
+  PENDING
+  QUALIFIED
+  WRITE_IN
+  WITHDRAWN
+  DISQUALIFIED
+  NOT_QUALIFIED
+  REPLACED
+}
+
+enum VerificationStatus {
+  UNVERIFIED
+  VERIFIED
+  DISPUTED
+  REJECTED
+}
+
 model Election {
   id          String   @id @default(uuid()) @db.Uuid
   name        String
   cycle       Int
   generalDate DateTime
   status      String
+  sourceAuthority String
+  sourceRecordId String
+  importKey   String @unique
   races       Race[]
+
+  @@unique([cycle, name])
 }
 
 model Race {
@@ -41,16 +63,18 @@ model Race {
   district    String?
   seatClass   String?
   specialFlag Boolean         @default(false)
+  sourceAuthority String
+  sourceRecordId String
+  importKey   String @unique
   candidates  RaceCandidate[]
+
+  @@unique([electionId, office, state, district, specialFlag])
 }
 
 model Candidate {
   id             String             @id @default(uuid()) @db.Uuid
   legalName      String
   displayName    String
-  partyText      String?
-  fecCandidateId String?            @unique
-  incumbentFlag  Boolean            @default(false)
   races          RaceCandidate[]
   accounts       CandidateAccount[]
   sources        Source[]
@@ -58,6 +82,32 @@ model Candidate {
   stances        Stance[]
   responses      CampaignResponse[]
   jobs           ResearchJob[]
+  externalIds    CandidateExternalId[]
+  replacements   RaceCandidate[] @relation("ReplacementCandidate")
+}
+
+model CandidateExternalId {
+  id          String    @id @default(uuid()) @db.Uuid
+  candidateId String    @db.Uuid
+  candidate   Candidate @relation(fields: [candidateId], references: [id])
+  authority   String
+  identifierType String
+  externalId  String
+  identityKey String @unique
+  sourceAuthority String
+  sourceRecordId String
+  electionCycle Int?
+  validFrom DateTime?
+  validUntil DateTime?
+  verificationMethod String
+  verificationStatus VerificationStatus
+  confidence Decimal @db.Decimal(4, 3)
+  firstObservedAt DateTime
+  lastObservedAt DateTime
+  createdAt   DateTime  @default(now())
+
+  @@unique([candidateId, sourceAuthority, sourceRecordId])
+  @@index([candidateId])
 }
 
 model RaceCandidate {
@@ -65,10 +115,26 @@ model RaceCandidate {
   candidateId  String    @db.Uuid
   race         Race      @relation(fields: [raceId], references: [id])
   candidate    Candidate @relation(fields: [candidateId], references: [id])
-  ballotStatus String
+  ballotStatus BallotStatus
   ballotOrder  Int?
+  partyText String?
+  incumbentFlag Boolean @default(false)
+  fecCandidateId String?
   withdrawnAt  DateTime?
+  disqualifiedAt DateTime?
+  replacedAt DateTime?
+  replacementCandidateId String? @db.Uuid
+  replacementCandidate Candidate? @relation("ReplacementCandidate", fields: [replacementCandidateId], references: [id])
+  writeIn Boolean @default(false)
+  filingStatus String?
+  sourceAuthority String
+  sourceRecordId String
+  importKey String @unique
+  observedAt DateTime
+  effectiveAt DateTime
+  updatedAt     DateTime  @updatedAt
   @@id([raceId, candidateId])
+  @@unique([raceId, sourceAuthority, sourceRecordId])
 }
 
 model CandidateAccount {
@@ -79,8 +145,13 @@ model CandidateAccount {
   accountId          String
   canonicalUrl       String
   verificationMethod String
-  status             String
-  @@unique([platform, accountId])
+  status             VerificationStatus
+  sourceAuthority String
+  sourceRecordId String
+  validFrom DateTime?
+  validUntil DateTime?
+  observedAt DateTime
+  @@unique([candidateId, platform, accountId])
 }
 
 model Issue {
@@ -101,6 +172,8 @@ model IssueVersion {
   goal              String
   planJson          Json
   effectiveAt       DateTime
+  status            String
+  definitionHash    String
   evidence          Evidence[]
   stances           Stance[]
   responses         CampaignResponse[]
@@ -159,6 +232,7 @@ model Stance {
   supersedes     Stance?           @relation("StanceHistory", fields: [supersedesId], references: [id])
   supersededBy   Stance[]          @relation("StanceHistory")
   status         PublicationStatus
+  current        Boolean @default(false)
   evidence       StanceEvidence[]
   @@index([candidateId, issueVersionId, effectiveAt])
 }
