@@ -1,0 +1,1 @@
+"use client";export default function ErrorPage({reset}:{reset:()=>void}){return <div className="shell page"><h1>Information is temporarily unavailable</h1><p>We could not load this page. No private error details are shown.</p><button className="button" onClick={reset}>Try again</button></div>}

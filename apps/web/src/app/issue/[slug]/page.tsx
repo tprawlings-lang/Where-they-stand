@@ -1,1 +1,1 @@
-export default async function Page({ params }: { params: Promise<{slug:string}> }) { const {slug}=await params; return <div className="shell page"><p className="eyebrow">Issue</p><h1>{slug.replaceAll("-", " ")}</h1><p className="lede">Issue detail, canonical wording, and evidence guidance will appear here.</p></div>; }
+export {default} from "../../issues/[slug]/page";

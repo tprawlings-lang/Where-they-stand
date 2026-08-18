@@ -1,1 +1,1 @@
-export default async function Page({params}:{params:Promise<{candidateId:string}>}) { const {candidateId}=await params; return <div className="shell page"><p className="eyebrow">Candidate {candidateId}</p><h1>Positions and sources</h1><p className="lede">Verified stance history and evidence will appear here.</p></div>; }
+export {default} from "../../candidates/[candidateId]/page";

@@ -1,3 +1,4 @@
 import { describe, expect, it } from "vitest";
-import { CandidateStanceSchema } from "./index.js";
+import { CandidateStanceSchema,PublicRaceComparisonSchema } from "./index.js";
 describe("stance contract", () => { it("rejects invented recommendation labels", () => { expect(CandidateStanceSchema.safeParse("BEST_CANDIDATE").success).toBe(false); }); });
+describe("public response contracts",()=>{it("rejects internal fields",()=>{const result=PublicRaceComparisonSchema.safeParse({id:"00000000-0000-4000-8000-000000000001",office:"HOUSE",state:"ZZ",district:"1",specialElection:false,orderingRule:"ALPHABETICAL_BY_SURNAME",election:{id:"00000000-0000-4000-8000-000000000002",name:"Demonstration election",cycle:2026,date:"2026-11-03T00:00:00.000Z",sourceAuthority:"FIXTURE",privateNotes:"never public"},issues:[],candidates:[]});expect(result.success).toBe(false)})});
