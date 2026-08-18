@@ -1,0 +1,292 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum PublicStanceLabel {
+  SUPPORTS
+  OPPOSES
+  DIFFERENT_APPROACH
+  NO_PUBLIC_POSITION
+  DECLINED_TO_STATE
+}
+
+enum PublicationStatus {
+  DRAFT
+  PENDING_REVIEW
+  PUBLISHED
+  SUPERSEDED
+  LEGAL_HOLD
+}
+
+enum BallotStatus {
+  PENDING
+  QUALIFIED
+  WRITE_IN
+  WITHDRAWN
+  DISQUALIFIED
+  NOT_QUALIFIED
+  REPLACED
+}
+
+enum VerificationStatus {
+  UNVERIFIED
+  VERIFIED
+  DISPUTED
+  REJECTED
+}
+
+model Election {
+  id          String   @id @default(uuid()) @db.Uuid
+  name        String
+  cycle       Int
+  generalDate DateTime
+  status      String
+  sourceAuthority String
+  sourceRecordId String
+  importKey   String @unique
+  races       Race[]
+
+  @@unique([cycle, name])
+}
+
+model Race {
+  id          String          @id @default(uuid()) @db.Uuid
+  electionId  String          @db.Uuid
+  election    Election        @relation(fields: [electionId], references: [id])
+  office      String
+  state       String
+  district    String?
+  seatClass   String?
+  specialFlag Boolean         @default(false)
+  sourceAuthority String
+  sourceRecordId String
+  importKey   String @unique
+  candidates  RaceCandidate[]
+
+  @@unique([electionId, office, state, district, specialFlag])
+}
+
+model Candidate {
+  id             String             @id @default(uuid()) @db.Uuid
+  legalName      String
+  displayName    String
+  races          RaceCandidate[]
+  accounts       CandidateAccount[]
+  sources        Source[]
+  evidence       Evidence[]
+  stances        Stance[]
+  responses      CampaignResponse[]
+  jobs           ResearchJob[]
+  externalIds    CandidateExternalId[]
+  replacements   RaceCandidate[] @relation("ReplacementCandidate")
+}
+
+model CandidateExternalId {
+  id          String    @id @default(uuid()) @db.Uuid
+  candidateId String    @db.Uuid
+  candidate   Candidate @relation(fields: [candidateId], references: [id])
+  authority   String
+  identifierType String
+  externalId  String
+  identityKey String @unique
+  sourceAuthority String
+  sourceRecordId String
+  electionCycle Int?
+  validFrom DateTime?
+  validUntil DateTime?
+  verificationMethod String
+  verificationStatus VerificationStatus
+  confidence Decimal @db.Decimal(4, 3)
+  firstObservedAt DateTime
+  lastObservedAt DateTime
+  createdAt   DateTime  @default(now())
+
+  @@unique([candidateId, sourceAuthority, sourceRecordId])
+  @@index([candidateId])
+}
+
+model RaceCandidate {
+  raceId       String    @db.Uuid
+  candidateId  String    @db.Uuid
+  race         Race      @relation(fields: [raceId], references: [id])
+  candidate    Candidate @relation(fields: [candidateId], references: [id])
+  ballotStatus BallotStatus
+  ballotOrder  Int?
+  partyText String?
+  incumbentFlag Boolean @default(false)
+  fecCandidateId String?
+  withdrawnAt  DateTime?
+  disqualifiedAt DateTime?
+  replacedAt DateTime?
+  replacementCandidateId String? @db.Uuid
+  replacementCandidate Candidate? @relation("ReplacementCandidate", fields: [replacementCandidateId], references: [id])
+  writeIn Boolean @default(false)
+  filingStatus String?
+  sourceAuthority String
+  sourceRecordId String
+  importKey String @unique
+  observedAt DateTime
+  effectiveAt DateTime
+  updatedAt     DateTime  @updatedAt
+  @@id([raceId, candidateId])
+  @@unique([raceId, sourceAuthority, sourceRecordId])
+}
+
+model CandidateAccount {
+  id                 String    @id @default(uuid()) @db.Uuid
+  candidateId        String    @db.Uuid
+  candidate          Candidate @relation(fields: [candidateId], references: [id])
+  platform           String
+  accountId          String
+  canonicalUrl       String
+  verificationMethod String
+  status             VerificationStatus
+  sourceAuthority String
+  sourceRecordId String
+  validFrom DateTime?
+  validUntil DateTime?
+  observedAt DateTime
+  @@unique([candidateId, platform, accountId])
+}
+
+model Issue {
+  id             String         @id @default(uuid()) @db.Uuid
+  slug           String         @unique
+  neutralTitle   String
+  publicCategory String
+  versions       IssueVersion[]
+}
+
+model IssueVersion {
+  id                String             @id @default(uuid()) @db.Uuid
+  issueId           String             @db.Uuid
+  issue             Issue              @relation(fields: [issueId], references: [id])
+  cycle             Int
+  version           Int
+  canonicalQuestion String
+  goal              String
+  planJson          Json
+  effectiveAt       DateTime
+  status            String
+  definitionHash    String
+  evidence          Evidence[]
+  stances           Stance[]
+  responses         CampaignResponse[]
+  jobs              ResearchJob[]
+  @@unique([issueId, version])
+}
+
+model Source {
+  id          String          @id @default(uuid()) @db.Uuid
+  candidateId String          @db.Uuid
+  candidate   Candidate       @relation(fields: [candidateId], references: [id])
+  type        String
+  url         String
+  platformId  String?
+  publishedAt DateTime?
+  retrievedAt DateTime
+  hash        String
+  archiveRef  String?
+  passages    SourcePassage[]
+}
+
+model SourcePassage {
+  id           String     @id @default(uuid()) @db.Uuid
+  sourceId     String     @db.Uuid
+  source       Source     @relation(fields: [sourceId], references: [id])
+  startOffset  Int
+  endOffset    Int
+  text         String
+  embeddingRef String?
+  evidence     Evidence[]
+}
+
+model Evidence {
+  id              String           @id @default(uuid()) @db.Uuid
+  candidateId     String           @db.Uuid
+  issueVersionId  String           @db.Uuid
+  sourcePassageId String           @db.Uuid
+  candidate       Candidate        @relation(fields: [candidateId], references: [id])
+  issueVersion    IssueVersion     @relation(fields: [issueVersionId], references: [id])
+  sourcePassage   SourcePassage    @relation(fields: [sourcePassageId], references: [id])
+  directness      String
+  reviewerNote    String?
+  approvedAt      DateTime?
+  stances         StanceEvidence[]
+}
+
+model Stance {
+  id             String            @id @default(uuid()) @db.Uuid
+  candidateId    String            @db.Uuid
+  issueVersionId String            @db.Uuid
+  candidate      Candidate         @relation(fields: [candidateId], references: [id])
+  issueVersion   IssueVersion      @relation(fields: [issueVersionId], references: [id])
+  label          PublicStanceLabel
+  effectiveAt    DateTime
+  supersedesId   String?           @db.Uuid
+  supersedes     Stance?           @relation("StanceHistory", fields: [supersedesId], references: [id])
+  supersededBy   Stance[]          @relation("StanceHistory")
+  status         PublicationStatus
+  current        Boolean @default(false)
+  evidence       StanceEvidence[]
+  @@index([candidateId, issueVersionId, effectiveAt])
+}
+
+model StanceEvidence {
+  stanceId    String   @db.Uuid
+  evidenceId  String   @db.Uuid
+  stance      Stance   @relation(fields: [stanceId], references: [id])
+  evidence    Evidence @relation(fields: [evidenceId], references: [id])
+  weightOrder Int
+  @@id([stanceId, evidenceId])
+}
+
+model CampaignResponse {
+  id                String            @id @default(uuid()) @db.Uuid
+  candidateId       String            @db.Uuid
+  issueVersionId    String            @db.Uuid
+  candidate         Candidate         @relation(fields: [candidateId], references: [id])
+  issueVersion      IssueVersion      @relation(fields: [issueVersionId], references: [id])
+  answer            PublicStanceLabel
+  explanation       String?
+  verifiedSubmitter Boolean           @default(false)
+  submittedAt       DateTime          @default(now())
+}
+
+model CorrectionCase {
+  id            String   @id @default(uuid()) @db.Uuid
+  targetType    String
+  targetId      String   @db.Uuid
+  submitterType String
+  state         String
+  resolution    String?
+  createdAt     DateTime @default(now())
+}
+
+model AuditEvent {
+  id         String   @id @default(uuid()) @db.Uuid
+  actorId    String?  @db.Uuid
+  action     String
+  entityType String
+  entityId   String   @db.Uuid
+  beforeJson Json?
+  afterJson  Json?
+  timestamp  DateTime @default(now())
+}
+
+model ResearchJob {
+  id             String        @id @default(uuid()) @db.Uuid
+  candidateId    String        @db.Uuid
+  issueVersionId String?       @db.Uuid
+  candidate      Candidate     @relation(fields: [candidateId], references: [id])
+  issueVersion   IssueVersion? @relation(fields: [issueVersionId], references: [id])
+  sourceScope    String
+  status         String
+  startedAt      DateTime?
+  finishedAt     DateTime?
+}

@@ -1,0 +1,1 @@
+export default async function Page({params}:{params:Promise<{raceId:string}>}) { const {raceId}=await params; return <div className="shell page"><p className="eyebrow">Race {raceId}</p><h1>Candidate comparison</h1><p className="lede">Every ballot-qualified candidate will receive equal space and the same issue version.</p></div>; }

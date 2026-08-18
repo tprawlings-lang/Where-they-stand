@@ -1,0 +1,1 @@
+export default function Page() { return <div className="shell page"><p className="eyebrow">Compare to me</p><h1>Your answers, kept in your browser.</h1><p className="lede">This tool will show agreement counts. It will never recommend a candidate.</p></div>; }

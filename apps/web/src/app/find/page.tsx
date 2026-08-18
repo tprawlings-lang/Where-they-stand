@@ -1,0 +1,1 @@
+export default function Page() { return <div className="shell page"><p className="eyebrow">Find my races</p><h1>Race lookup is coming next.</h1><p className="lede">Address lookup will resolve your district and discard the raw address by default. A state and district fallback will remain available.</p></div>; }

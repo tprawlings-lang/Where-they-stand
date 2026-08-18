@@ -1,0 +1,5 @@
+[
+ {"candidate_id":"H0CO01001","name":"RIVERA, ALEX","office":"H","state":"CO","district":"01","party_full":"Democratic Party","candidate_status":"C","incumbent_challenge":"C","election_years":[2026]},
+ {"candidate_id":"H0CO01002","name":"CHEN, MORGAN","office":"H","state":"CO","district":"01","party_full":"Republican Party","candidate_status":"C","incumbent_challenge":"I","election_years":[2026]},
+ {"candidate_id":"H0CO01003","name":"PATEL, JORDAN","office":"H","state":"CO","district":"01","party_full":"Independent","candidate_status":"N","incumbent_challenge":"O","election_years":[2026]}
+]

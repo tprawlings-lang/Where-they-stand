@@ -1,0 +1,1 @@
+export default function Page() { return <div className="shell page"><h1>Corrections</h1><p className="lede">Every campaign and member of the public will use the same traceable correction process.</p></div>; }

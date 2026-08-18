@@ -1,0 +1,4 @@
+import Link from "next/link";
+import { issueDefinitions } from "@where-they-stand/issue-definitions";
+
+export default function Home() { return <><section className="shell hero"><p className="eyebrow">Neutral candidate-position research</p><h1>Where They Stand</h1><p className="lede">15 questions. Every federal candidate. Their position, their source, your decision. The platform does not endorse candidates, parties, or policy positions.</p><div className="actions"><Link className="button primary" href="/find">Find my races</Link><Link className="button" href="/issues">Browse the 15 issues</Link></div></section><section className="shell"><h2>The questions stay the same for every candidate.</h2><div className="grid">{issueDefinitions.slice(0, 6).map(issue => <article className="card" key={issue.id}><p className="eyebrow">{issue.category}</p><h3>{issue.title}</h3><p>{issue.question}</p></article>)}</div></section></>; }

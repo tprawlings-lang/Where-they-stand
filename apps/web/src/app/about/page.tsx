@@ -1,0 +1,1 @@
+export default function Page() { return <div className="shell page"><h1>About</h1><p className="lede">Where They Stand documents federal candidate positions against fixed questions and links each published position to public evidence.</p></div>; }

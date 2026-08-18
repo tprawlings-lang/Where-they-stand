@@ -1,0 +1,1 @@
+export default function Page() { return <div className="shell page"><p className="eyebrow">Methodology</p><h1>Evidence decides the label.</h1><p className="lede">Party affiliation cannot establish a stance. A lack of qualifying evidence is not opposition. Public political classifications require human verification.</p></div>; }

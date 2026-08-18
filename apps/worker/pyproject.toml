@@ -1,0 +1,25 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "where-they-stand-worker"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = ["httpx>=0.28,<1", "pydantic>=2.11,<3", "psycopg[binary]>=3.2,<4", "redis>=6,<7", "sqlalchemy>=2.0,<3"]
+
+[project.optional-dependencies]
+dev = ["mypy>=1.17,<2", "pytest>=8.4,<9", "ruff>=0.12,<1"]
+
+[project.scripts]
+wts-worker = "where_they_stand_worker.main:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/where_they_stand_worker"]
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+[tool.ruff]
+line-length = 100
+[tool.mypy]
+python_version = "3.12"
+strict = true

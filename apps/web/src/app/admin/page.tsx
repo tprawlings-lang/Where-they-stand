@@ -1,0 +1,1 @@
+export default function Page() { return <div className="shell page"><h1>Admin placeholder</h1><p>This route is not authenticated yet. Research and publication controls will require role-based access before implementation.</p></div>; }
