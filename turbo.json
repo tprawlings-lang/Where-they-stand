@@ -36,6 +36,9 @@
       "cache": false,
       "dependsOn": [
         "^build"
+      ],
+      "env": [
+        "DATABASE_URL"
       ]
     }
   }

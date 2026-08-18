@@ -31,7 +31,10 @@ jobs:
       - run: pnpm lint
       - run: pnpm typecheck
       - run: pnpm test
-      - run: pnpm test:db
+      - name: Run all PostgreSQL integration tests and report test count
+        run: pnpm test:db
+        env:
+          DATABASE_URL: postgresql://wts:test@localhost:5432/where_they_stand_test
       - run: pnpm build
   python:
     runs-on: ubuntu-latest
