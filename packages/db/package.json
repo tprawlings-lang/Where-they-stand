@@ -15,7 +15,7 @@
     "db:migrate": "prisma migrate dev",
     "db:validate": "prisma validate",
     "db:seed": "tsx prisma/seed.ts",
-    "test:db": "vitest run --reporter=verbose prisma/integrity.integration.test.ts prisma/phase1-acceptance.integration.test.ts",
+    "test:db": "vitest run --no-file-parallelism --reporter=verbose prisma/integrity.integration.test.ts prisma/phase1-acceptance.integration.test.ts",
     "pretest:db": "node -e \"if (!process.env.DATABASE_URL) { console.error(\\\"DATABASE_URL is required; refusing to skip PostgreSQL integration tests.\\\"); process.exit(1) }\""
   },
   "prisma": {
