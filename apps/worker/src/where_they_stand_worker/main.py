@@ -3,8 +3,10 @@ import argparse
 import json
 from typing import Sequence
 
+
 def health() -> dict[str, str]:
     return {"service": "where-they-stand-worker", "status": "ok"}
+
 
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
