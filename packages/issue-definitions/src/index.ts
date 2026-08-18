@@ -1,0 +1,20 @@
+import housing from "../issues/housing-supply.v1.json" with { type: "json" };
+import medical from "../issues/medical-price-disclosure.v1.json" with { type: "json" };
+import immigration from "../issues/immigration-reset.v1.json" with { type: "json" };
+import stocks from "../issues/congressional-stock-ownership.v1.json" with { type: "json" };
+import war from "../issues/war-powers.v1.json" with { type: "json" };
+import voterId from "../issues/federal-voter-id.v1.json" with { type: "json" };
+import border from "../issues/border-enforcement.v1.json" with { type: "json" };
+import parents from "../issues/parental-authority-in-schools.v1.json" with { type: "json" };
+import energy from "../issues/energy-permitting.v1.json" with { type: "json" };
+import gender from "../issues/federal-funding-minor-gender-procedures.v1.json" with { type: "json" };
+import abortion from "../issues/federal-abortion-standard.v1.json" with { type: "json" };
+import health from "../issues/universal-health-coverage.v1.json" with { type: "json" };
+import firearms from "../issues/firearm-background-checks.v1.json" with { type: "json" };
+import voting from "../issues/federal-voting-access-standards.v1.json" with { type: "json" };
+import tax from "../issues/high-income-corporate-minimum-tax.v1.json" with { type: "json" };
+import { z } from "zod";
+
+export const IssueDefinitionSchema = z.object({ id:z.string().min(1), version:z.number().int().positive(), title:z.string().min(1), billName:z.string().min(1), goal:z.string().min(1), question:z.string().min(1), category:z.enum(["Costs and Markets","Government and Elections","Immigration and Border","Rights, Family, and Health","National Security"]), electionCycle:z.literal(2026), status:z.literal("active") }).strict();
+export type IssueDefinition = z.infer<typeof IssueDefinitionSchema>;
+export const issueDefinitions: IssueDefinition[] = [housing,medical,immigration,stocks,war,voterId,border,parents,energy,gender,abortion,health,firearms,voting,tax].map(value=>IssueDefinitionSchema.parse(value));
