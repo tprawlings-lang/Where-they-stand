@@ -30,6 +30,8 @@ model Election {
   generalDate DateTime
   status      String
   races       Race[]
+
+  @@unique([cycle, name])
 }
 
 model Race {
@@ -42,6 +44,8 @@ model Race {
   seatClass   String?
   specialFlag Boolean         @default(false)
   candidates  RaceCandidate[]
+
+  @@unique([electionId, office, state, district, specialFlag])
 }
 
 model Candidate {
@@ -58,6 +62,19 @@ model Candidate {
   stances        Stance[]
   responses      CampaignResponse[]
   jobs           ResearchJob[]
+  externalIds    CandidateExternalId[]
+}
+
+model CandidateExternalId {
+  id          String    @id @default(uuid()) @db.Uuid
+  candidateId String    @db.Uuid
+  candidate   Candidate @relation(fields: [candidateId], references: [id])
+  authority   String
+  externalId  String
+  createdAt   DateTime  @default(now())
+
+  @@unique([authority, externalId])
+  @@index([candidateId])
 }
 
 model RaceCandidate {
@@ -68,7 +85,13 @@ model RaceCandidate {
   ballotStatus String
   ballotOrder  Int?
   withdrawnAt  DateTime?
+  disqualifiedAt DateTime?
+  fecFilingStatus String?
+  sourceAuthority String
+  sourceRecordId String
+  updatedAt     DateTime  @updatedAt
   @@id([raceId, candidateId])
+  @@unique([sourceAuthority, sourceRecordId])
 }
 
 model CandidateAccount {
@@ -101,6 +124,8 @@ model IssueVersion {
   goal              String
   planJson          Json
   effectiveAt       DateTime
+  status            String
+  definitionHash    String
   evidence          Evidence[]
   stances           Stance[]
   responses         CampaignResponse[]

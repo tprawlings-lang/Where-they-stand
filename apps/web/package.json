@@ -9,6 +9,9 @@
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
+    "@where-they-stand/contracts": "workspace:*",
+    "@where-they-stand/db": "workspace:*",
+    "@where-they-stand/election-data": "workspace:*",
     "@where-they-stand/issue-definitions": "workspace:*",
     "@where-they-stand/ui": "workspace:*",
     "next": "15.5.2",
