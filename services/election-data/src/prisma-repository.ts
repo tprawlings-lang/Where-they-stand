@@ -9,7 +9,9 @@ export class PrismaElectionDataRepository implements ElectionDataRepository {
  async getRace(id:string){const result=await this.db.race.findUnique({where:{id},include:{candidates:{include:{candidate:true},orderBy:[{ballotOrder:"asc"},{candidate:{displayName:"asc"}}]}}});if(!result)return null;return {...result,candidates:orderRaceCandidates(result.candidates.map(({updatedAt:_,...entry})=>entry) as never)} as never}
  async getCandidate(id:string){const result=await this.db.candidate.findUnique({where:{id},include:{races:true,accounts:true}});if(!result)return null;return {...result,races:result.races.map(({updatedAt:_,...entry})=>entry)} as never}
  async identityCandidates(input:CandidateImport){
-  const identifiers=input.identifiers.map(i=>({authority:i.authority,identifierType:i.identifierType,externalId:i.externalId,electionCycle:i.electionCycle}));
+  // Load every owner of the raw identifier. The resolver applies the explicit
+  // stable-person versus candidacy scope policy after seeing all owners.
+  const identifiers=input.identifiers.map(({authority,identifierType,externalId})=>({authority,identifierType,externalId}));
   const rows=await this.db.candidate.findMany({where:{OR:[{races:{some:{race:{office:input.office,state:input.state,election:{cycle:input.cycle},specialFlag:input.specialElection}}}},{externalIds:{some:{OR:identifiers}}}]},include:{externalIds:true,races:{include:{race:{include:{election:true}}}}}});
   return rows.map(candidate=>({...candidate,identifiers:candidate.externalIds,candidacies:candidate.races.map(({race})=>({office:race.office,state:race.state,cycle:race.election.cycle,specialElection:race.specialFlag}))})) as never;
  }
