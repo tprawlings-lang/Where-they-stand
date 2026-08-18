@@ -1,5 +1,5 @@
 import type { IdentityCandidate } from "./identity";
-import type { BallotStatus,CandidateAccountRecord,CandidateImport,CandidateRecord,ElectionRecord,ExternalIdentifierInput,RaceCandidateRecord,RaceRecord } from "./types";
+import type { BallotStatusTransition,CandidateAccountRecord,CandidateImport,CandidateRecord,ElectionRecord,ExternalIdentifierInput,RaceCandidateRecord,RaceRecord } from "./types";
 export type IdentifierAttachment={kind:"ATTACHED"}|{kind:"CONFLICT";candidateIds:string[];identifiers:ExternalIdentifierInput[]};
 export interface ElectionDataRepository {
  getElection(id:string):Promise<ElectionRecord|null>; listRaces(electionId:string,options?:{limit:number;offset:number}):Promise<RaceRecord[]>;
@@ -9,5 +9,5 @@ export interface ElectionDataRepository {
  deleteUnassociatedCandidate(candidateId:string):Promise<void>;
  attachExternalIds(candidateId:string,ids:readonly ExternalIdentifierInput[]):Promise<IdentifierAttachment>;
  upsertRaceCandidate(input:CandidateImport,candidateId:string):Promise<RaceCandidateRecord>;
- setBallotStatus(raceId:string,candidateId:string,status:BallotStatus,at:Date):Promise<RaceCandidateRecord>;
+ setBallotStatus(raceId:string,candidateId:string,transition:BallotStatusTransition,at:Date):Promise<RaceCandidateRecord>;
 }

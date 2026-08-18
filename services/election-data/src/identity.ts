@@ -1,5 +1,6 @@
 import type { CandidateIdentityInput, CandidateRecord, ExternalIdentifierInput } from "./types";
-export interface IdentityCandidate extends CandidateRecord { office:string; state:string; cycle:number; specialElection:boolean; identifiers:readonly ExternalIdentifierInput[]; website?:string; birthDate?:string }
+export interface CandidateScope {office:string;state:string;cycle:number;specialElection:boolean}
+export interface IdentityCandidate extends CandidateRecord { candidacies:readonly CandidateScope[]; identifiers:readonly ExternalIdentifierInput[]; website?:string; birthDate?:string }
 export type IdentityResolution =
  | {kind:"MATCH";candidateId:string;reasons:string[]}
  | {kind:"NEW";reasons:string[]}
@@ -11,9 +12,9 @@ const sameIdentifier=(a:ExternalIdentifierInput,b:ExternalIdentifierInput)=>a.au
 export function resolveCandidateIdentity(input:CandidateIdentityInput,candidates:readonly IdentityCandidate[]):IdentityResolution {
  const owners=new Map<string,ExternalIdentifierInput[]>();
  for(const candidate of candidates) for(const identifier of input.identifiers) if(candidate.identifiers.some(existing=>sameIdentifier(existing,identifier))) owners.set(candidate.id,[...(owners.get(candidate.id)??[]),identifier]);
- const outOfScope=[...owners.keys()].filter(id=>{const c=candidates.find(value=>value.id===id)!;return c.office!==input.office||c.state!==input.state;});
+ const outOfScope=[...owners.keys()].filter(id=>{const candidate=candidates.find(value=>value.id===id)!;return !candidate.candidacies.some(scope=>scope.office===input.office&&scope.state===input.state);});
  if(outOfScope.length) return {kind:"CONFLICT",candidateIds:outOfScope,identifiers:input.identifiers.filter(i=>candidates.some(c=>outOfScope.includes(c.id)&&c.identifiers.some(e=>sameIdentifier(e,i)))),reasons:["identifier already belongs to an out-of-scope candidate"]};
- const scoped=candidates.filter(c=>c.office===input.office&&c.state===input.state);
+ const scoped=candidates.filter(candidate=>candidate.candidacies.some(scope=>scope.office===input.office&&scope.state===input.state));
  const corroborated=scoped.filter(c=>owners.has(c.id)||Boolean(input.birthDate&&c.birthDate===input.birthDate)||Boolean(input.website&&c.website&&new URL(c.website).hostname===new URL(input.website).hostname));
  if(corroborated.length>1) return {kind:"AMBIGUOUS",candidateIds:corroborated.map(c=>c.id),reasons:["multiple corroborated identities require review"]};
  if(corroborated.length===1) return {kind:"MATCH",candidateId:corroborated[0]!.id,reasons:["office/state and incoming cycle context","corroborating identity"]};

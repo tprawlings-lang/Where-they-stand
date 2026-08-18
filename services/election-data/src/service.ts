@@ -1,6 +1,6 @@
 import { resolveCandidateIdentity } from "./identity";
 import type { ElectionDataRepository } from "./repository";
-import type { BallotStatus,CandidateImport } from "./types";
+import type { BallotStatusTransition,CandidateImport } from "./types";
 export class ElectionDataService {
  constructor(private readonly repository:ElectionDataRepository){}
  getElection(id:string){return this.repository.getElection(id)}
@@ -16,5 +16,5 @@ export class ElectionDataService {
   if(attachment.kind==="CONFLICT"){if(resolution.kind==="NEW")await this.repository.deleteUnassociatedCandidate(candidate.id);return {kind:"CONFLICT",resolution:attachment} as const}
   return {kind:"IMPORTED",candidate,raceCandidate:await this.repository.upsertRaceCandidate(input,candidate.id),created:resolution.kind==="NEW"} as const;
  }
- setBallotStatus(raceId:string,candidateId:string,status:BallotStatus,at=new Date()){return this.repository.setBallotStatus(raceId,candidateId,status,at)}
+ setBallotStatus(raceId:string,candidateId:string,transition:BallotStatusTransition,at=new Date()){if(transition.status==="REPLACED"&&!("replacementCandidateId" in transition))throw new Error("REPLACED requires replacementCandidateId");return this.repository.setBallotStatus(raceId,candidateId,transition,at)}
 }

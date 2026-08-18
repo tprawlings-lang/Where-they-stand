@@ -1,5 +1,8 @@
 export const BALLOT_STATUSES = ["PENDING", "QUALIFIED", "WRITE_IN", "WITHDRAWN", "DISQUALIFIED", "NOT_QUALIFIED", "REPLACED"] as const;
 export type BallotStatus = typeof BALLOT_STATUSES[number];
+export type BallotStatusTransition =
+  | { status: "REPLACED"; replacementCandidateId: string }
+  | { status: Exclude<BallotStatus, "REPLACED"> };
 export type Office = "HOUSE" | "SENATE" | "PRESIDENT" | "OTHER";
 export type VerificationStatus = "UNVERIFIED" | "VERIFIED" | "DISPUTED" | "REJECTED";
 export interface ElectionRecord { id:string; name:string; cycle:number; generalDate:Date; status:string; sourceAuthority:string; sourceRecordId:string; importKey:string }

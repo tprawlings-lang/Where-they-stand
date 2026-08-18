@@ -1,7 +1,7 @@
 import {orderRaceCandidates} from "./order";
 import type { PrismaClient } from "@where-they-stand/db";
 import type { ElectionDataRepository,IdentifierAttachment } from "./repository";
-import {externalIdentifierKey,type BallotStatus,type CandidateImport,type ExternalIdentifierInput} from "./types";
+import {externalIdentifierKey,type BallotStatusTransition,type CandidateImport,type ExternalIdentifierInput} from "./types";
 export class PrismaElectionDataRepository implements ElectionDataRepository {
  constructor(private readonly db:PrismaClient){}
  getElection(id:string){return this.db.election.findUnique({where:{id}}) as never}
@@ -11,7 +11,7 @@ export class PrismaElectionDataRepository implements ElectionDataRepository {
  async identityCandidates(input:CandidateImport){
   const identifiers=input.identifiers.map(i=>({authority:i.authority,identifierType:i.identifierType,externalId:i.externalId,electionCycle:i.electionCycle}));
   const rows=await this.db.candidate.findMany({where:{OR:[{races:{some:{race:{office:input.office,state:input.state,election:{cycle:input.cycle},specialFlag:input.specialElection}}}},{externalIds:{some:{OR:identifiers}}}]},include:{externalIds:true,races:{include:{race:{include:{election:true}}}}}});
-  return rows.map((candidate:any)=>({...candidate,office:input.office,state:input.state,cycle:input.cycle,specialElection:input.specialElection,identifiers:candidate.externalIds})) as never;
+  return rows.map(candidate=>({...candidate,identifiers:candidate.externalIds,candidacies:candidate.races.map(({race})=>({office:race.office,state:race.state,cycle:race.election.cycle,specialElection:race.specialFlag}))})) as never;
  }
  createCandidate(input:CandidateImport){return this.db.candidate.create({data:{legalName:input.legalName,displayName:input.displayName}})}
  async deleteUnassociatedCandidate(candidateId:string){await this.db.candidate.deleteMany({where:{id:candidateId,races:{none:{}},externalIds:{none:{}}}})}
@@ -30,5 +30,5 @@ export class PrismaElectionDataRepository implements ElectionDataRepository {
   const statusTimes={withdrawnAt:input.ballotStatus==="WITHDRAWN"?input.effectiveAt:null,disqualifiedAt:input.ballotStatus==="DISQUALIFIED"?input.effectiveAt:null,replacedAt:input.ballotStatus==="REPLACED"?input.effectiveAt:null};
   return tx.raceCandidate.upsert({where:{raceId_sourceAuthority_sourceRecordId:key},create:{raceId:input.raceId,candidateId,ballotStatus:input.ballotStatus,ballotOrder:input.ballotOrder,partyText:input.partyText,incumbentFlag:input.incumbentFlag??false,fecCandidateId:input.fecCandidateId,filingStatus:input.filingStatus,sourceAuthority:input.sourceAuthority,sourceRecordId:input.sourceRecordId,importKey:input.importKey,observedAt:input.observedAt,effectiveAt:input.effectiveAt,writeIn:input.ballotStatus==="WRITE_IN",replacementCandidateId:input.replacementCandidateId,...statusTimes},update:{ballotOrder:input.ballotOrder,partyText:input.partyText,incumbentFlag:input.incumbentFlag??false,filingStatus:input.filingStatus,observedAt:input.observedAt}})
  },{isolationLevel:"Serializable"}) as never}
- setBallotStatus(raceId:string,candidateId:string,status:BallotStatus,at:Date){return this.db.raceCandidate.update({where:{raceId_candidateId:{raceId,candidateId}},data:{ballotStatus:status,withdrawnAt:status==="WITHDRAWN"?at:null,disqualifiedAt:status==="DISQUALIFIED"?at:null,replacedAt:status==="REPLACED"?at:null,writeIn:status==="WRITE_IN"}}) as never}
+ setBallotStatus(raceId:string,candidateId:string,transition:BallotStatusTransition,at:Date){const status=transition.status;return this.db.raceCandidate.update({where:{raceId_candidateId:{raceId,candidateId}},data:{ballotStatus:status,withdrawnAt:status==="WITHDRAWN"?at:null,disqualifiedAt:status==="DISQUALIFIED"?at:null,replacedAt:status==="REPLACED"?at:null,replacementCandidateId:status==="REPLACED"?transition.replacementCandidateId:null,writeIn:status==="WRITE_IN"}}) as never}
 }
