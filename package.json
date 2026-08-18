@@ -1,0 +1,16 @@
+{
+  "name": "where-they-stand",
+  "private": true,
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "typecheck": "turbo typecheck",
+    "test": "turbo test && node --test tests/neutrality/*.test.mjs"
+  },
+  "devDependencies": {
+    "turbo": "^2.5.6"
+  },
+  "packageManager": "pnpm@10.15.1",
+  "engines": { "node": ">=20" }
+}
