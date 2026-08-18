@@ -22,7 +22,20 @@ export class PrismaElectionDataRepository implements ElectionDataRepository {
    const conflicts=[] as ExternalIdentifierInput[]; const owners=new Set<string>();
    for(const id of ids){const existing=await tx.candidateExternalId.findUnique({where:{identityKey:externalIdentifierKey(id)}});if(existing&&existing.candidateId!==candidateId){conflicts.push(id);owners.add(existing.candidateId)}}
    if(conflicts.length)return {kind:"CONFLICT",candidateIds:[...owners],identifiers:conflicts};
-   for(const id of ids){const identityKey=externalIdentifierKey(id);await tx.candidateExternalId.upsert({where:{identityKey},create:{id:crypto.randomUUID(),candidateId,identityKey,...id,firstObservedAt:id.observedAt,lastObservedAt:id.observedAt},update:{lastObservedAt:id.observedAt,verificationStatus:id.verificationStatus,confidence:id.confidence}})};
+   for(const id of ids){
+    const identityKey=externalIdentifierKey(id);
+    await tx.candidateExternalId.upsert({
+     where:{identityKey},
+     create:{
+      id:crypto.randomUUID(),candidateId,identityKey,authority:id.authority,identifierType:id.identifierType,
+      externalId:id.externalId,sourceAuthority:id.sourceAuthority,sourceRecordId:id.sourceRecordId,
+      electionCycle:id.electionCycle??null,validFrom:id.validFrom??null,validUntil:id.validUntil??null,
+      verificationMethod:id.verificationMethod,verificationStatus:id.verificationStatus,confidence:id.confidence,
+      firstObservedAt:id.observedAt,lastObservedAt:id.observedAt
+     },
+     update:{lastObservedAt:id.observedAt,verificationStatus:id.verificationStatus,confidence:id.confidence}
+    });
+   }
    return {kind:"ATTACHED"};
   },{isolationLevel:"Serializable"});
  }
