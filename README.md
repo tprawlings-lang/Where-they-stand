@@ -1,4 +1,3 @@
-# Where-they-stand
 # Where They Stand
 
 Where They Stand is a nonpartisan platform that documents where federal candidates stand on specific legislative proposals.
