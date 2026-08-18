@@ -6,6 +6,15 @@ Election records are imported through `@where-they-stand/election-data`. The FEC
 
 `Candidate` stores stable person names only. Party, incumbency, filing identifiers/status, ballot status, and ballot provenance belong to a race candidacy. Identity matching requires office, state, cycle, election type, and corroborating data. A name or party never establishes identity. Identifier ownership conflicts return an explicit review result and are not attached.
 
+Identifier types are deny-by-default: an unknown type is **candidacy-specific**.
+`CANDIDATE_ID`, committee, ballot, filing, account, and every other unlisted ID
+requires an exact office, state, election cycle, and regular/special-election
+match. Reuse outside that four-part scope returns `CONFLICT`, never an implicit
+person merge. Only `BIOGUIDE_ID` and `STATE_PERSON_ID` are documented as stable
+person identifiers and may bridge those dimensions. Adding another stable type
+requires an explicit policy and code change; stability is never inferred from a
+missing cycle or an identifier's name.
+
 Election, race, and ballot imports use deterministic, source-scoped keys. FEC filing never establishes ballot qualification. Withdrawals, disqualifications, replacements, and write-ins remain stored with provenance and effective/observation timestamps.
 
 ## Issue seed
