@@ -1,5 +1,6 @@
 from where_they_stand_worker.main import health, main
 
+
 def test_health() -> None:
     assert health() == {"service": "where-they-stand-worker", "status": "ok"}
 
