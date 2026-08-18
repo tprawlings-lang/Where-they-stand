@@ -1,0 +1,14 @@
+{
+  "notice": "Fictional deterministic demonstration data. Not live election information.",
+  "election": {"id":"00000000-0000-4000-8000-000000000101","name":"North Valley Demonstration Election","date":"2026-11-03"},
+  "race": {"id":"00000000-0000-4000-8000-000000000102","office":"HOUSE","state":"ZZ","district":"1"},
+  "candidates": [
+    {"id":"00000000-0000-4000-8000-000000000103","name":"Avery Morgan","party":"Civic Party","ballotOrder":1},
+    {"id":"00000000-0000-4000-8000-000000000104","name":"Jordan Lee","party":"Independent","ballotOrder":2}
+  ],
+  "statesExercised": ["published stance","missing stance","multiple evidence records","older published version"],
+  "sources": [
+    {"url":"https://example.com/demo-platform","excerpt":"The fictional campaign supports the demonstration proposal."},
+    {"url":"https://example.org/demo-interview","excerpt":"The candidate described a different mechanism in this fictional interview."}
+  ]
+}

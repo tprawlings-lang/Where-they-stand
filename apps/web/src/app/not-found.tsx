@@ -1,0 +1,1 @@
+import Link from "next/link";export default function NotFound(){return <div className="shell page"><p className="eyebrow">Not found</p><h1>This public record is not available.</h1><p>The ID or issue slug may be invalid, or the record may not be published.</p><Link className="button" href="/">Return home</Link></div>}

@@ -2,8 +2,10 @@
 
 :root { --paper: #f7f5ef; --ink: #17252b; --muted: #59676b; --accent: #397c7a; --line: #cfd7d5; }
 * { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
 body { margin: 0; background: var(--paper); color: var(--ink); font-family: Arial, Helvetica, sans-serif; }
 a { color: inherit; }
+a:focus-visible, button:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
 .shell { width: min(1120px, calc(100% - 2rem)); margin: 0 auto; }
 .site-header { border-bottom: 1px solid var(--line); }
 .site-header .shell { display: flex; justify-content: space-between; align-items: center; gap: 1rem; min-height: 72px; }
@@ -21,5 +23,31 @@ h2 { font-size: clamp(1.7rem, 4vw, 2.6rem); }
 .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 1rem; padding-bottom: 5rem; }
 .card { border: 1px solid var(--line); border-radius: .5rem; padding: 1.25rem; background: rgba(255,255,255,.45); }
 .page { padding: 4rem 0 6rem; max-width: 780px; }
+.page.wide { max-width: 1120px; }
+.section { padding: 2rem 0 4rem; }
+.notice,.empty-state,.missing-position { border-left: 4px solid var(--accent); background: #e8efed; padding: 1rem; color: var(--ink); }
+.steps { display:grid; grid-template-columns:repeat(3,1fr); gap:1rem; padding:0; list-style:none; }
+.steps li { display:flex; min-height:8rem; flex-direction:column; gap:.75rem; border-top:3px solid var(--accent); padding:1rem 0; }
+.issue-grid,.stance-list { display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:1rem; }
+.issue-link { display:flex; flex-direction:column; gap:.7rem; text-decoration:none; }
+.issue-group { margin-top:3rem; }
+.method-strip { background:var(--ink); color:white; padding:3rem 0; }
+.definition { display:grid; grid-template-columns:minmax(9rem,1fr) 3fr; border-top:1px solid var(--line); }
+.definition dt,.definition dd { margin:0; padding:1rem 0; border-bottom:1px solid var(--line); }
+.definition dt { font-weight:700; }
+.candidate-heads { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:1rem; margin:2rem 0; }
+.candidate-card { display:flex; flex-direction:column; min-height:12rem; border:1px solid var(--line); padding:1.25rem; }
+.candidate-card a { margin-top:auto; }
+.comparison-row { border-top:1px solid var(--line); padding:1.5rem 0; }
+.candidate-stances { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:1rem; }
+.candidate-stances section { display:flex; flex-direction:column; align-items:flex-start; gap:.75rem; min-height:10rem; padding:1rem; border:1px solid var(--line); }
+.stance-chip { display:inline-flex; min-height:2.5rem; align-items:center; border:2px solid var(--ink); border-radius:999px; padding:.45rem .8rem; font-weight:700; }
+.evidence-button,.close-button { min-height:44px; border:1px solid var(--ink); border-radius:.3rem; background:transparent; padding:.6rem .8rem; font-weight:700; cursor:pointer; }
+dialog { width:min(36rem,calc(100% - 2rem)); max-height:calc(100vh - 2rem); margin:0 0 0 auto; padding:1.5rem; border:0; border-left:1px solid var(--line); overflow:auto; }
+dialog::backdrop { background:rgba(23,37,43,.55); }
+.drawer-head { display:flex; justify-content:space-between; gap:1rem; align-items:flex-start; }
+.evidence-list { padding-left:1.25rem; }.evidence-list li { border-top:1px solid var(--line); padding:1rem 0; }.evidence-list dl { display:grid; grid-template-columns:6rem 1fr; }.evidence-list dd { margin:0; }
+.history { border-left:2px solid var(--line); padding:0 0 1.5rem 1rem; margin:1rem 0; }
 .site-footer { border-top: 1px solid var(--line); padding: 1.5rem 0; color: var(--muted); font-size: .9rem; }
-@media (max-width: 700px) { .site-header .shell { align-items: flex-start; flex-direction: column; padding: 1rem 0; } .hero { padding-top: 4rem; } }
+@media (max-width: 700px) { .site-header .shell { align-items: flex-start; flex-direction: column; padding: 1rem 0; } .hero { padding-top: 4rem; } .steps{grid-template-columns:1fr}.definition{grid-template-columns:1fr}.definition dt{border-bottom:0;padding-bottom:0}.candidate-heads{grid-template-columns:1fr}.candidate-stances{grid-template-columns:1fr}dialog{width:100%;max-height:90vh;margin:auto 0 0} }
+@media (prefers-reduced-motion: reduce){html{scroll-behavior:auto}*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
