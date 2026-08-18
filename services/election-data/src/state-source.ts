@@ -1,4 +1,4 @@
-import type { CandidateImport } from "./types.js";
+import type { CandidateImport } from "./types";
 export interface StateElectionSource {
   readonly authority: string;
   discover(electionId:string): Promise<readonly string[]>;

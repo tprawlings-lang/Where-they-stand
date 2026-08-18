@@ -1,6 +1,6 @@
-import { resolveCandidateIdentity } from "./identity.js";
-import type { ElectionDataRepository } from "./repository.js";
-import type { BallotStatus, CandidateImport } from "./types.js";
+import { resolveCandidateIdentity } from "./identity";
+import type { ElectionDataRepository } from "./repository";
+import type { BallotStatus, CandidateImport } from "./types";
 export class ElectionDataService {
   constructor(private readonly repository: ElectionDataRepository) {}
   getElection(id:string){ return this.repository.getElection(id); }

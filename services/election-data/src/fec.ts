@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { CandidateImport, Office } from "./types.js";
+import type { CandidateImport, Office } from "./types";
 const FecCandidateSchema=z.object({candidate_id:z.string().min(1),name:z.string().min(1),office:z.enum(["H","S","P"]),state:z.string().length(2),district:z.string().nullable().optional(),party_full:z.string().nullable().optional(),candidate_status:z.string().nullable().optional(),incumbent_challenge:z.string().nullable().optional(),election_years:z.array(z.number().int())});
 export type FecCandidate = z.infer<typeof FecCandidateSchema>;
 const office:Record<FecCandidate["office"],Office>={H:"HOUSE",S:"SENATE",P:"PRESIDENT"};

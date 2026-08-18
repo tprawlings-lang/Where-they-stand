@@ -1,4 +1,4 @@
-import type { CandidateIdentityInput, CandidateRecord } from "./types.js";
+import type { CandidateIdentityInput, CandidateRecord } from "./types";
 export interface IdentityCandidate extends CandidateRecord { office: string; state: string; cycle: number; identifiers: Readonly<Record<string,string>>; website?: string; birthDate?: string }
 export type IdentityResolution = { kind:"MATCH"; candidateId:string; reasons:string[] } | { kind:"NEW"; reasons:string[] } | { kind:"AMBIGUOUS"; candidateIds:string[]; reasons:string[] };
 const normalized = (value: string) => value.trim().toLocaleLowerCase("en-US").replace(/[.,]/g, "").replace(/\s+/g, " ");

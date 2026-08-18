@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe,expect,it,vi } from "vitest";
-import { FixtureFecAdapter, resolveCandidateIdentity, ElectionDataService, type CandidateImport } from "./index.js";
+import { FixtureFecAdapter, resolveCandidateIdentity, ElectionDataService, type CandidateImport } from "./index";
 const fixture=JSON.parse(readFileSync(new URL("../fixtures/fec-candidates.json",import.meta.url),"utf8")) as unknown[];
 const base={id:"one",legalName:"Alex Rivera",displayName:"Alex Rivera",partyText:"Democratic Party",fecCandidateId:"H0CO01001",incumbentFlag:false,office:"HOUSE",state:"CO",cycle:2026,identifiers:{FEC:"H0CO01001"}} as const;
 describe("candidate identity",()=>{

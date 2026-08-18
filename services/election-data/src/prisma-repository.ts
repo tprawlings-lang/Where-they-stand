@@ -1,6 +1,6 @@
 import type { PrismaClient } from "@where-they-stand/db";
-import type { ElectionDataRepository } from "./repository.js";
-import type { BallotStatus, CandidateImport } from "./types.js";
+import type { ElectionDataRepository } from "./repository";
+import type { BallotStatus, CandidateImport } from "./types";
 
 export class PrismaElectionDataRepository implements ElectionDataRepository {
   constructor(private readonly db: PrismaClient) {}

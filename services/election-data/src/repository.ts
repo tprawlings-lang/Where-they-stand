@@ -1,4 +1,13 @@
-import type { BallotStatus, CandidateAccountRecord, CandidateImport, CandidateRecord, ElectionRecord, IdentityCandidate, RaceCandidateRecord, RaceRecord } from "./index.js";
+import type { IdentityCandidate } from "./identity";
+import type {
+  BallotStatus,
+  CandidateAccountRecord,
+  CandidateImport,
+  CandidateRecord,
+  ElectionRecord,
+  RaceCandidateRecord,
+  RaceRecord,
+} from "./types";
 export interface ElectionDataRepository {
   getElection(id:string): Promise<ElectionRecord|null>; listRaces(electionId:string):Promise<RaceRecord[]>; getRace(id:string):Promise<(RaceRecord & { candidates:(RaceCandidateRecord & { candidate:CandidateRecord })[] })|null>;
   getCandidate(id:string):Promise<(CandidateRecord & { races:RaceCandidateRecord[]; accounts:CandidateAccountRecord[] })|null>;
