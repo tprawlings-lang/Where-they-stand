@@ -1,7 +1,7 @@
 """Minimal worker entry point. No collection is started by this command."""
 import argparse
 import json
-from typing import Sequence
+from collections.abc import Sequence
 
 
 def health() -> dict[str, str]:
